@@ -20,13 +20,27 @@
             runtimeInputs = [ pkgs.bubblewrap pkgs.coreutils pkgs.curl pkgs.findutils pkgs.iputils pkgs.nix llm-agents.packages.${system}.mistral-vibe ];
             text = ''
               cmd=(vibe)
-              if [[ "''${1:-}" == "--bash" ]]; then
-                shift
-                cmd=(${pkgs.bash}/bin/bash)
-              fi
+              bind_path=""
+              
+              while [[ $# -gt 0 ]]; do
+                case "$1" in
+                  --bind)
+                    bind_path="$2"
+                    shift 2
+                    ;;
+                  --bash)
+                    shift
+                    cmd=(${pkgs.bash}/bin/bash)
+                    ;;
+                  *)
+                    break
+                    ;;
+                esac
+              done
 
               mkdir -p "$HOME"/.vibe
               exec bwrap \
+                ''${bind_path:+--bind "$bind_path" "$bind_path"} \
                 --ro-bind /nix /nix \
                 --ro-bind /etc/nix /etc/nix \
                 --bind "$PWD" "$PWD" \
